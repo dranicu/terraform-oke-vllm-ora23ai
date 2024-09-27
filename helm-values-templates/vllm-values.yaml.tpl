@@ -14,7 +14,9 @@ deploy:
     %{ endif }
     - "--api-key"
     - "${LLM_API_KEY}"
-    - "--chat-template=/chat-templates/gemma-it.jinja"
+    %{ if use_chat_template == true }
+    - "--chat-template=/chat-templates/chat-template.jinja"
+    %{ endif }
 
   image:
     tag: "latest"
@@ -23,10 +25,14 @@ deploy:
     enabled: true
 
   volumeMounts:
+    %{ if use_chat_template == true }
     - name: chat-template-volume
       mountPath: /chat-templates
+    %{ endif }
 
   volumes:
+    %{ if use_chat_template == true }
     - name: chat-template-volume
       configMap:
         name: chat-template-config
+    %{ endif }
