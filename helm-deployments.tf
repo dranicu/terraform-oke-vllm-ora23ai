@@ -164,46 +164,28 @@ module "vllm" {
   namespace           = "default"
   helm_repository_url = "https://robo-cap.github.io/helm-charts/"
 
-pre_deployment_commands = [
-  # Export the public IP
-  "export PUBLIC_IP=$(kubectl get svc -A -l app.kubernetes.io/name=ingress-nginx -o json | jq -r '.items[] | select(.spec.type == \"LoadBalancer\") | .status.loadBalancer.ingress[].ip')",
 
-  # Generate chat-template configMap
-  "cat <<'EOF' | kubectl apply -f -",
-  "apiVersion: v1",
-  "kind: ConfigMap",
-  "metadata:",
-  "  name: chat-template-config",
-  "  namespace: default",
-  "data:",
-  "  gemma-it.jinja: |",
-  "    {% raw %}{% if messages[0]['role'] == 'system' %}",
-  "        {% set system_message = messages[0]['content'] | trim + '\\n\\n' %}",
-  "        {% set messages = messages[1:] %}",
-  "    {% else %}",
-  "        {% set system_message = '' %}",
-  "    {% endif %}",
-  "    {% for message in messages %}",
-  "        {% if (message['role'] == 'user') != (loop.index0 % 2 == 0) %}",
-  "            {{ raise_exception('Conversation roles must alternate user/assistant/user/assistant/...') }}",
-  "        {% endif %}",
-  "        {% if loop.index0 == 0 %}",
-  "            {% set content = system_message + message['content'] %}",
-  "        {% else %}",
-  "            {% set content = message['content'] %}",
-  "        {% endif %}",
-  "        {% if (message['role'] == 'assistant') %}",
-  "            {% set role = 'model' %}",
-  "        {% else %}",
-  "            {% set role = message['role'] %}",
-  "        {% endif %}",
-  "        {{ '<start_of_turn>' + role + '\\n' + content | trim + '<end_of_turn>\\n' }}",
-  "    {% endfor %}",
-  "    {% if add_generation_prompt %}",
-  "        {{'<start_of_turn>model\\n'}}",
-  "    {% endif %}",
-  "EOF"
-]
+
+pre_deployment_commands = flatten(concat(
+  [
+    # Export the public IP
+    [
+      "export PUBLIC_IP=$(kubectl get svc -A -l app.kubernetes.io/name=ingress-nginx -o json | jq -r '.items[] | select(.spec.type == \"LoadBalancer\") | .status.loadBalancer.ingress[].ip')"
+    ]
+  ],
+  
+  # Conditionally include the chat-template configMap commands if use_chat_template is true
+  (var.use_chat_template ? [
+    "cat <<EOF > /tmp/chat-template.jinja",
+    "${var.chat_template}",
+    "EOF",
+    # Create the ConfigMap using the file
+    "kubectl create configmap chat-template-config --from-file=/tmp/chat-template.jinja",
+    "rm /tmp/chat-template.jinja"
+  ] : [])
+))
+
+
 
   deployment_extra_args = [
     "--set ingress.hosts[0]=llm.$${PUBLIC_IP}.nip.io",
@@ -220,6 +202,7 @@ pre_deployment_commands = [
       LLM_API_KEY   = var.LLM_API_KEY
       model         = var.model
       max_model_len = tostring(var.max_model_len)
+      use_chat_template = var.use_chat_template
     }
   )
 
