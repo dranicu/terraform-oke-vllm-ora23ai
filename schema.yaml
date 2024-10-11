@@ -125,6 +125,8 @@ variableGroups:
       - vllm_user_values_override
       - HF_TOKEN
       - LLM_API_KEY
+      - use_chat_template
+      - chat_template
       - model
       - max_model_len
 
@@ -454,7 +456,7 @@ variables:
     type: string
     title: Helm | JupyterHub - Playbooks Git Repo
     description: "Git Repository with Jupyter plabooks examples."
-    default: "https://github.com/dranicu/oracle23ai_rag_cohere.git"
+    default: "https://github.com/dranicu/oracle23ai-nim.git"
     visible: ${deploy_jupyterhub}
 
   deploy_vllm:
@@ -476,6 +478,21 @@ variables:
     description: The vLLM <a target="_blank" href="https://docs.vllm.ai/en/latest/models/supported_models.html">supported models</a>. Make sure to get access prior to deployment to the gated models.
     default: google/gemma-2-2b-it
     required: true
+
+  use_chat_template:
+    type: boolean
+    default: false
+    title: Use a chat template
+    description:  Whether the selected model needs a chat template (jinja file)
+
+  chat_template:
+    type: text
+    required: false
+    multiline: true
+    title: "Jinja chat template"
+    description: "Paste your chat template."
+    default: ""
+    visible: ${use_chat_template}
 
   max_model_len:
     type: integer
