@@ -529,7 +529,7 @@ variable "jupyter_admin_password" {
 
 variable "jupyter_playbooks_repo" {
   type        = string
-  default     = "https://github.com/dranicu/oracle23ai_rag_cohere/"
+  default     = "https://github.com/dranicu/oracle23ai-nim.git"
   description = "Link for the Git repository that will be automatically imported in the home directory of the JupyterHub container."
 }
 
@@ -554,6 +554,17 @@ variable "max_model_len" {
   type        = number
   default     = -1
   description = "Maximum context length."
+}
+
+variable "use_chat_template" {
+  type = bool
+  description = "Whether to use a chat template"
+}
+
+variable "chat_template" {
+  type = string
+  description = "Jinja chat template"
+  default = ""
 }
 
 #ADB variables
