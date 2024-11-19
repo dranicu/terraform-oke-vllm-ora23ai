@@ -132,11 +132,6 @@ For integration with your OCI tenancy IDCS domain, you may go through the follow
     helm upgrade jupyterhub jupyterhub --repo https://hub.jupyter.org/helm-chart/ --reuse-values -f oauth2-values.yaml
     ```
 
-
-### Qdrant
-
-[Qdrant Vector DB](https://qdrant.tech/documentation/) is deployed in stand-alone mode to store the embeddings required the RAG pipeline.
-
 ### vLLM
 
 The LLM is fetched from HuggingFace and deployed using [vLLM](https://docs.vllm.ai/en/latest/).
